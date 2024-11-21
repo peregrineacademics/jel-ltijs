@@ -5,7 +5,7 @@
   "main": "index.js",
   "engineStrict": true,
   "engines": {
-    "node": ">=12.13.0"
+    "node": "20.x"
   },
   "scripts": {
     "test": "MONGOMS_VERSION=7.0.3 NODE_TLS_REJECT_UNAUTHORIZED=0 nyc mocha",
