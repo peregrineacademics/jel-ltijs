@@ -1,25 +1,25 @@
 var config = {
     tool: {
-        url: 'https://ltijs-stage.peregrineglobal.com',
+        url: 'https://ltijs-joe.peregrineglobal.com',
         port: 8080,
-        name: 'Peregrine Global Services (JEL)',
-        description: "This tool provides Deep Linking integration with Peregrine Global Services' assessment solutions.",        
+        name: 'Peregrine Global Services (joe 2)',
+        description: "joe-This tool provides Deep Linking integration with Peregrine Global Services' assessment solutions.",        
         logoUrl: 'https://peregrineglobal.com/wp-content/uploads/pgs-seal-color-1.png',
-        redirectUrls: [
-            'https://learn-stage.peregrineglobal.com',
-            'https://ltijs-stage.peregrineglobal.com/register',
-            'https://ltijs-stage.peregrineglobal.com/'
+        redirectUris: [
+            'https://learn-dev.peregrineglobal.com',
+            'https://ltijs-joe.peregrineglobal.com/register',
+            'https://ltijs-joe.peregrineglobal.com/'
         ],
-        postbackUrl: 'https://ltijs-stage.peregrineglobal.com/grade',
-        devMode: true,
-        https: false,  // Note: this is FALSE when in stage/prod since the load balancer provides https
+        postbackUrl: 'https://ltijs-joe.peregrineglobal.com/grade',
+        devMode: false,
+        https: false,  // Note: this is FALSE when in development/stage/prod since the load balancer provides https
     },
     database: {
-        url: 'mongodb+srv://ltijs-stage.w5pfd.mongodb.net/?retryWrites=true&w=majority',
+        url: 'mongodb+srv://ltijs-dev.w5pfd.mongodb.net/?retryWrites=true&w=majority',
         password: 'oRUY12TydPS4CQtC'
     },
     // The site where the user is forwarded for Deeplinking and other similar requests
-    deepLinkSite: 'http://localhost:3000',
+    deepLinkSite: 'https://deeplink-dev.peregrineglobal.com',
     pasApi: {
         baseUrl: 'https://api-stage.peregrineglobal.com'
     },
@@ -41,5 +41,8 @@ var config = {
     },
     ltiApiUrl: 'https://pxvduruhagmddmr23nhe2fgexe0igwtt.lambda-url.us-east-2.on.aws'
 };
-
+ 
 module.exports = config;
+
+
+

@@ -1,35 +1,37 @@
-const path = require('path')
+const path = require('path');
+const config = require('./config');
+const routes = require('./routes');
+const pasRoutes = require('./pasRoutes/pasRoutes.js');
 
 // Require Provider 
 const lti = require('ltijs').Provider
 
 // Setup provider
 lti.setup('PASMADEUPKEY8123$', // Key used to sign cookies and tokens
-  { // Database configuration
+  { 
+    // Database configuration
     url: 'mongodb+srv://ltijs-dev.w5pfd.mongodb.net/?retryWrites=true&w=majority',
     connection: { user: 'lti', pass: 'oRUY12TydPS4CQtC' }
   },
   { // Options
-    appRoute: '/', loginRoute: '/login', // Optionally, specify some of the reserved routes
+    appRoute: '/', 
+    loginRoute: '/login', // Optionally, specify some of the reserved routes
     cookies: {
       secure: false, // Set secure to true if the testing platform is in a different domain and https is being used
       sameSite: 'None' // Set sameSite to 'None' if the testing platform is in a different domain and https is being used
     },
-    devMode: false, // Set DevMode to false if running in a production environment with https
+    devMode: true, // Set DevMode to false if running in a production environment with https
     dynRegRoute: '/register', // Setting up dynamic registration route. Defaults to '/register'
     dynReg: {
-      url: 'https://ltijs-joe.peregrineglobal.com', // Tool Provider URL. Required field.
-      name: 'Peregrine Global Services (JOE)',
-      description: "This tool provides Deep Linking integration with Peregrine Global Services' assessment solutions.",        
-      logoUrl: 'https://peregrineglobal.com/wp-content/uploads/pgs-seal-color-1.png',
-      redirectUrls: [
-          'https://learn-joe.peregrineglobal.com',
-          'https://ltijs-joe.peregrineglobal.com/register',
-          'https://ltijs-joe.peregrineglobal.com/'
-      ],
-      customParameters: {  }, // Custom parameters.
-      useDeepLinking: true,
-      autoActivate: true // Whether or not dynamically registered Platforms should be automatically activated. Defaults to false.
+        url: config.tool.url, // Tool Provider URL. Required field.
+        name: config.tool.name, // Tool Provider name. Required field.
+        logo: config.tool.logoUrl, // Tool Provider logo URL.
+        description: config.tool.description, // Tool Provider description.
+        redirectUris: config.tool.redirectUris, // Additional redirection URLs. The main URL is added by default.
+        customParameters: { }, // Custom parameters.
+        autoActivate: true, // Whether or not dynamically registered Platforms should be automatically activated. Defaults to false.
+        postbackUrl: config.tool.postbackUrl,
+        useDeepLinking: true,
     }
   }
 )
@@ -40,21 +42,6 @@ lti.onConnect((token, req, res) => {
   console.log(token)
   return res.send('It\'s alive!')
 })
-
-const setup = async () => {
-  // Deploy server and open connection to the database
-  await lti.deploy({ port: 8080 }) // Specifying port. Defaults to 3000
-
-  // Register platform
-  await lti.registerPlatform({
-    url: 'https://ltijs-joe.peregrineglobal.com',
-    name: 'Joe\'s LTIJS',
-    clientId: 'TOOLCLIENTID',
-    authenticationEndpoint: 'https://ltijs-joe.peregrineglobal.com/auth',
-    accesstokenEndpoint: 'https://ltijs-joe.peregrineglobal.com/token',
-    authConfig: { method: 'JWK_SET', key: 'https://ltijs-joe.peregrineglobal.com/keyset' }
-  })
-}
 
 
 lti.onDynamicRegistration(async (req, res, next) => {
@@ -69,19 +56,24 @@ lti.onDynamicRegistration(async (req, res, next) => {
       delete customParameters.registration_token;
 
       if (!req.query.openid_configuration) {
-          return res.status(400).send({ status: 400, error: 'Bad Request', details: { message: 'Missing parameter (1): "openid_configuration".' } });
+          return res.status(400).send({ 
+            status: 400, error: 'Bad Request', details: { 
+              message: 'Missing parameter (1): "openid_configuration".' 
+            } 
+          });
       }
 
       let options = {
         customParameters
       };
 
-      const message = await lti.DynamicRegistration.register(req.query.openid_configuration, req.query.registration_token, options);
+      const message = await lti.DynamicRegistration.register(
+        req.query.openid_configuration, req.query.registration_token, options
+      );
 
       res.setHeader('Content-type', 'text/html');
       res.send(message);
   } catch (err) {
-      //logger.logMessage(`lti.onDynamicRegistration failed`, null, err, req, res);
 
       if (err.message === 'PLATFORM_ALREADY_REGISTERED') {
           return res.status(403).send({ status: 403, error: 'Forbidden', details: { message: 'Platform already registered.' } });
@@ -104,6 +96,31 @@ lti.onDeepLinking(async (token, req, res) => {
  
 });
 
+// Allow certain routes to not require the LTIJS authentication; these are used internally by admin; these should match what's setup in pasRoutes.js
+lti.whitelist('/pas/registerPlatform');
+
+lti.whitelist('/resources');
+
+// Setup routes for CMAD admin use
+lti.app.use(pasRoutes);
+
+// Setting up routes for grade postback, deeplinking
+lti.app.use(routes);
+
+const setup = async () => {
+  // Deploy server and open connection to the database
+  await lti.deploy({ port: 8080 }) // Specifying port. Defaults to 3000
+
+  // Register platform
+  await lti.registerPlatform({
+    url: 'https://ltijs-joe.peregrineglobal.com',
+    name: 'Ltc-ltijs-dev-env',
+    clientId: 'TOOLCLIENTID',
+    authenticationEndpoint: 'https://ltijs-joe.peregrineglobal.com/auth',
+    accesstokenEndpoint: 'https://ltijs-joe.peregrineglobal.com/token',
+    authConfig: { method: 'JWK_SET', key: 'https://ltijs-joe.peregrineglobal.com/keyset' }
+  })
+}
 
 setup()
 
